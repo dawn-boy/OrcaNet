@@ -6,11 +6,7 @@ services:
     restart: always
 
   web:
-    build:
-      context: .
-      args:
-        - UID=${UID:-1000}
-        - GID=${GID:-1000}
+    build: .
     ports:
       - "5000:5000"
     volumes:

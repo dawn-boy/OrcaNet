@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, Response
+from flask import Blueprint, render_template, request, Response, send_from_directory
 from werkzeug.utils import secure_filename
 from . import tasks
 
@@ -149,3 +149,8 @@ def update_radar(task_id: str, contig_id: str):
     return render_template('partials/radar_card_content.html',
                            contig=contig_data,
                            plot_json=radar_plot_json)
+
+@bp.route('/results_data/<task_id>/<path:filename>')
+def serve_result_file(task_id, filename):
+    directory = f"/orcanet/results_data/{task_id}"
+    return send_from_directory(directory, filename)

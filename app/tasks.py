@@ -3,6 +3,9 @@ import time
 import pandas as pd
 from celery import shared_task
 import plotly.graph_objects as go
+import plotly.express as px
+from scipy.spatial.distance import pdist, squareform # For distance matrix
+from scipy.cluster.hierarchy import linkage, to_tree # For
 
 def create_radar_chart(contig_data):
     """Creates a Plotly radar chart for a single contig's scores."""
@@ -34,6 +37,22 @@ def create_radar_chart(contig_data):
         margin=dict(l=40, r=40, b=40, t=40)
     )
     return fig.to_json()
+
+def get_newick(node, leaf_names):
+    if node.is_leaf():
+        # If it's a leaf, return its name
+        return leaf_names[node.id]
+    else:
+        # If it's a branch, recursively call for its children
+        left_branch = get_newick(node.left, leaf_names)
+        right_branch = get_newick(node.right, leaf_names)
+
+        # Branch length is the difference in height between parent and child
+        left_len = node.dist - node.left.dist
+        right_len = node.dist - node.right.dist
+
+        # Return the formatted Newick string for this node
+        return f"({left_branch}:{left_len:.6f},{right_branch}:{right_len:.6f})"
 
 
 @shared_task(bind=True)
@@ -68,6 +87,50 @@ def run_analysis_pipeline(self, json_filepath: str):
             stage_result_data = {
                 'high_quality_reads': 18500,
                 'low_quality_reads': 5000,
+            }
+
+        # STAGE TWO
+        if stage_name == "metagenomic_assembly":
+            result_dir = f"/orcanet/results_data/{self.request.id}"
+            os.makedirs(result_dir, exist_ok=True)
+
+            fig = px.scatter_3d(
+                df, x='UMAP_x', y='UMAP_y', z='UMAP_z', color='novelty_score',
+                hover_data=['contig_id'], custom_data=['contig_id'],
+                title="3D UMAP Projection of Assembled Contigs"
+            )
+            fig.update_layout(template='plotly_dark', margin=dict(l=0, r=0, b=0, t=40))
+            plot_json = fig.to_json()
+
+            try:
+                tree_path = os.path.join(result_dir, "tree.nwk")
+                if len(df) >= 2:
+                    features_for_tree = ['UMAP_x', 'UMAP_y', 'UMAP_z']
+                    available_features = [f for f in features_for_tree if f in df.columns]
+                    if available_features:
+                        X = df[available_features].values
+                    elif 'novelty_score' in df.columns:
+                        X = df[['novelty_score']].values
+                    else:
+                        raise ValueError("No suitable features found for tree generation.")
+
+                    distance_matrix = pdist(X, metric='euclidean')
+                    linked_tree = linkage(distance_matrix, method='average')
+
+                    tree_root = to_tree(linked_tree)
+                    newick_tree = get_newick(tree_root, df['contig_id'].tolist()) + ";"
+
+                    with open(tree_path, "w") as f:
+                        f.write(newick_tree)
+                    print(f"Successfully wrote dynamic tree file to {tree_path}")
+
+                    time.sleep(1)
+            except Exception as e:
+                print(f"ERROR: Could not write tree file. Reason: {e}")
+
+            stage_result_data = {
+                'plot_json': plot_json,
+                'task_id': self.request.id
             }
 
         # STAGE FOUR
