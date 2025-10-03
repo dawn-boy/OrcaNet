@@ -6,6 +6,20 @@ import plotly.graph_objects as go
 import plotly.express as px
 from scipy.spatial.distance import pdist, squareform # For distance matrix
 from scipy.cluster.hierarchy import linkage, to_tree # For
+import numpy as np
+import random
+
+
+def create_wavelet_chart(contig_data):
+    x_data = np.linspace(0, 10, 100)
+    # Use a value from the contig data to make the wave unique
+    frequency = contig_data.get('novelty_score', 1) * 5
+    y_data = np.sin(x_data * frequency) + np.random.normal(0, 0.1, 100)
+
+    wave_fig = px.line(x=x_data, y=y_data, title=f"Morlet Wavelet (simulated)")
+    wave_fig.update_layout(template='plotly_dark', xaxis_title="Time", yaxis_title="Amplitude",
+                           margin=dict(l=20, r=20, b=20, t=40))
+    return wave_fig.to_json()
 
 def create_radar_chart(contig_data):
     """Creates a Plotly radar chart for a single contig's scores."""
@@ -81,12 +95,17 @@ def run_analysis_pipeline(self, json_filepath: str):
 
     # PLACEHOLDER VISUALS
         df = pd.read_json(json_filepath, orient='records')
+        all_contigs = df.to_dict(orient='records')
 
         # STAGE ONE
         if stage_name == "quality_control":
+            total_contigs = len(df)
+            high_quality_count = random.randint(int(total_contigs * 0.8), total_contigs)
+            low_quality_count = total_contigs - high_quality_count
+
             stage_result_data = {
-                'high_quality_reads': 18500,
-                'low_quality_reads': 5000,
+                'High Quality Reads': high_quality_count,
+                'Low Quality Reads': low_quality_count,
             }
 
         # STAGE TWO
@@ -133,9 +152,18 @@ def run_analysis_pipeline(self, json_filepath: str):
                 'task_id': self.request.id
             }
 
+        # STAGE THREE
+        if stage_name == "feature_extraction":
+            top_contig = sorted(all_contigs, key=lambda x: x.get('novelty_score', 0), reverse=True)[0]
+            wavelet_plot_json = create_wavelet_chart(top_contig)
+            stage_result_data = {
+                'contig': top_contig,
+                'plot_json': wavelet_plot_json,
+                'task_id': self.request.id
+            }
+
         # STAGE FOUR
         if stage_name == "novelty_scoring":
-            all_contigs = df.to_dict(orient='records')
             top_contig = sorted(all_contigs, key=lambda x: x.get('novelty_score', 0), reverse=True)[0]
             radar_plot_json = create_radar_chart(top_contig)
             stage_result_data = {

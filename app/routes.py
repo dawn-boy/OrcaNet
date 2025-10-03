@@ -1,7 +1,8 @@
 import os
-from flask import Blueprint, render_template, request, Response, send_from_directory
+from flask import Blueprint, render_template, request, Response, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 from . import tasks
+import random
 
 bp = Blueprint('routes', __name__)
 
@@ -132,23 +133,35 @@ def results_table(task_id: str):
                            sort_order=sort_order)
 
 
-@bp.route('/update_radar/<task_id>/<contig_id>')
-def update_radar(task_id: str, contig_id: str):
+# --- DELETE the old /update_radar and /get_visualizations routes ---
+
+# --- ADD THIS NEW, UNIFIED ROUTE ---
+@bp.route('/update_details/<task_id>/<contig_id>')
+def update_details(task_id: str, contig_id: str):
     task = tasks.run_analysis_pipeline.AsyncResult(task_id)
-    if task.state != 'SUCCESS':
-        return "<p>Task not complete or found.</p>"
+    if task.state != 'SUCCESS': return ""
 
     all_contigs = task.result.get('final_meta', {}).get('completed_stages', [])[-1].get('data', {}).get('all_contigs',
                                                                                                         [])
     contig_data = next((c for c in all_contigs if c['contig_id'] == contig_id), None)
+    if not contig_data: return ""
 
-    if not contig_data:
-        return f"<p>Contig {contig_id} not found.</p>"
-
+    # 1. Generate the Radar Chart update
     radar_plot_json = tasks.create_radar_chart(contig_data)
-    return render_template('partials/radar_card_content.html',
-                           contig=contig_data,
-                           plot_json=radar_plot_json)
+    radar_html = render_template('partials/radar_card_content.html', contig=contig_data, plot_json=radar_plot_json)
+    oob_radar = f'<div id="novelty-card-content" hx-swap-oob="true">{radar_html}</div>'
+
+    # 2. Generate the CGR/Wavelet update
+    wavelet_plot_json = tasks.create_wavelet_chart(contig_data)
+    #cgr_url = url_for('static', filename=f'cgr_images/cgr_{contig_id}.png')
+    cgr_url = f"/static/cgr_images/{random.randint(1,5)}.png"
+
+    feature_html = render_template('partials/feature_card_content.html', contig=contig_data, cgr_url=cgr_url,
+                                   plot_json=wavelet_plot_json)
+    oob_features = f'<div id="feature-card-content" hx-swap-oob="true">{feature_html}</div>'
+
+    # Send both OOB swaps back in one response
+    return Response(oob_radar + oob_features)
 
 @bp.route('/results_data/<task_id>/<path:filename>')
 def serve_result_file(task_id, filename):

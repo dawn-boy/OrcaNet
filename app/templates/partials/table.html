@@ -36,8 +36,7 @@
             <tbody class="bg-gray-800 divide-y divide-gray-600">
                 {% for row in contigs %}
            <tr class="cursor-pointer hover:bg-gray-700 transition-colors"
-                hx-get="{{ url_for('routes.update_radar', task_id=task_id, contig_id=row.contig_id) }}"
-                hx-target="#novelty-card-content"
+                hx-get="{{ url_for('routes.update_details', task_id=task_id, contig_id=row.contig_id) }}"                hx-target="#novelty-card-content"
                 hx-swap="innerHTML">
                {% for cell in row.values() %}
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">

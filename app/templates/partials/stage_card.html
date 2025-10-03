@@ -29,6 +29,15 @@
                 </div>
             </div>
         </div>
+    {% elif stage.name == 'feature_extraction' %}
+        <div id="feature-card-content">
+            {% set contig = stage.data.contig %}
+            {% set plot_json = stage.data.plot_json %}
+<!--            {% set cgr_url = url_for('static', filename='cgr_images/cgr_' ~ stage.data.contig.contig_id ~ '.png') %}-->
+            {% set cgr_url = url_for('static', filename='cgr_images/1.png') %}
+            {% include 'partials/feature_card_content.html' %}
+
+        </div>
     {% elif stage.name == 'novelty_scoring' %}
         <div id="novelty-card-content">
             {% set contig = stage.data.contig %}
@@ -47,35 +56,43 @@
         </div>
     </div>
 
-            <script>
-                {
-                    // --- UMAP Plot Rendering (this is correct) ---
-                    const graph_json_str = `{{ stage.data.plot_json|safe }}`;
-                    if (graph_json_str && graph_json_str !== 'None') {
-                        const graph_json = JSON.parse(graph_json_str);
-                        const plotDiv = document.getElementById('assembly-umap-plot');
-                        Plotly.newPlot(plotDiv, graph_json.data, graph_json.layout);
+
+    <script>
+        {
+            // --- UMAP Plot Rendering ---
+            const graph_json_str = `{{ stage.data.plot_json|safe }}`;
+            if (graph_json_str && graph_json_str !== 'None') {
+                const graph_json = JSON.parse(graph_json_str);
+                const plotDiv = document.getElementById('assembly-umap-plot');
+                Plotly.newPlot(plotDiv, graph_json.data, graph_json.layout);
+
+                // --- THIS IS THE FIX for UMAP clicks ---
+                plotDiv.on('plotly_click', function(data){
+                    if (data.points.length > 0) {
+                        const contigId = data.points[0].customdata[0];
+                        const taskId = "{{ stage.data.task_id }}";
+
+                        // Use htmx.ajax() to make a GET request to your route
+                        htmx.ajax('GET', `/update_details/${taskId}/${contigId}`, {swap: 'none'});
                     }
+                });
+            }
 
-                    // --- CORRECTED: Tree Rendering (based on the documentation) ---
-                    const taskId = "{{ stage.data.task_id }}";
-                    const treeUrl = `/results_data/${taskId}/tree.nwk`;
+            // --- Tree Rendering ---
+            const taskId = "{{ stage.data.task_id }}";
+            const treeUrl = `/results_data/${taskId}/tree.nwk`;
 
-                    fetch(treeUrl)
-                      .then(response => response.text())
-                      .then(data => {
-                        if (data && data.trim().length > 1) {
-
-
-                                    const treeContainer = document.getElementById('assembly-tree-viewer');
-
-                          // Use the constructor and properties from the official documentation
-                          const tree = new phylocanvas.PhylocanvasGL(
-                            treeContainer,
-                            {
-                              source: data,
-                              type: phylocanvas.TreeTypes.Radial, // Set tree type to Radial
-                              interactive: true, // Enable zooming and panning
+            fetch(treeUrl)
+              .then(response => response.text())
+              .then(data => {
+                if (data && data.trim().length > 1) {
+                  const treeContainer = document.getElementById('assembly-tree-viewer');
+                  const tree = new phylocanvas.PhylocanvasGL(
+                    treeContainer,
+                    {
+                      source: data,
+                      type: phylocanvas.TreeTypes.Radial,
+                      interactive: true, // This is key for enabling clicks
 
                               // --- Styling for Dark Theme ---
                               fontSize: 14,
@@ -90,18 +107,27 @@
                               showLabels: true,
                               showLeafLabels: true,
                               padding: 20
-                        }
-                      );
-
-                            }
-
-                        })
+                    }
+                  );
                 }
-            </script>
+              });
+        }
+    </script>
 
 
     {% elif stage.name == 'quality_control' %}
-        <p>fastp results would go here.</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-center">
+            {% for key, value in stage.data.items() %}
+            <div class="bg-gray-900 p-4 rounded-lg">
+                <h6 class="text-md font-semibold {% if 'High' in key %}text-green-400{% else %}text-yellow-400{% endif %}">
+                    {{ key }}
+                </h6>
+                <p class="text-3xl font-mono font-bold text-white mt-1">
+                    {{ "{:,}".format(value) }}
+                </p>
+            </div>
+            {% endfor %}
+        </div>
     {% else %}
         <p class="text-sm text-gray-500">{{stage.name}}Stage complete. Data processed.</p>
     {% endif %}

@@ -1,0 +1,22 @@
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+    <div class="text-center">
+        <h5 class="text-lg font-semibold text-gray-300 mb-2">CGR Image for {{ contig.contig_id }}</h5>
+        <img src="{{ cgr_url }}" alt="CGR Image for {{ contig.contig_id }}" class="rounded-lg w-auto h-[440px] mx-auto">
+    </div>
+
+    <div class="text-center">
+        <h5 class="text-lg font-semibold text-gray-300 mb-2">Wavelet simulation for {{ contig.contig_id }}</h5>
+        <div id="wavelet-chart" class="w-full h-[440px]"></div>
+    </div>
+</div>
+
+<script>
+    {
+        const wavelet_json_str = `{{ plot_json|safe }}`;
+        if (wavelet_json_str) {
+            const wavelet_json = JSON.parse(wavelet_json_str);
+            const waveletDiv = document.getElementById('wavelet-chart');
+            Plotly.newPlot(waveletDiv, wavelet_json.data, wavelet_json.layout);
+        }
+    }
+</script>
