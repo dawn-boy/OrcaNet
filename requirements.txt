@@ -1,0 +1,19 @@
+# Python Libraries
+
+# Core web framework
+flask
+# Background task processing
+celery
+# Message broker for Celery
+redis
+# HTMX integration for Flask
+flask-htmx
+
+# Data manipulation and scientific computing
+pandas
+numpy
+scipy
+
+# Plotting and visualization
+plotly
+matplotlib

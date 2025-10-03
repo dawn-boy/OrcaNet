@@ -1,0 +1,10 @@
+{
+  "name": "orcanet",
+  "version": "1.0.0",
+  "scripts": {
+    "watch": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/style.css --poll"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.1"
+  }
+}
