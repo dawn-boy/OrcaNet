@@ -1,0 +1,28 @@
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+    <div id="radar-chart" class="w-full h-64"></div>
+
+    <div class="flex flex-col space-y-2 text-sm">
+        {% set scores = ['embedding_score', 'homology_score', 'wavelet_score', 'motif_score', 'vision_uncertainty'] %}
+        {% for score_name in scores %}
+        <div class="flex justify-between">
+            <span class="text-gray-400">{{ score_name.replace('_', ' ') | title }}:</span>
+            <span class="font-mono text-white">{{ "%.2f"|format(contig[score_name]) }}</span>
+        </div>
+        {% endfor %}
+        <div class="pt-4 text-center">
+            <p class="text-xs uppercase text-gray-400">Final Novelty Score</p>
+            <p class="text-3xl font-bold text-cyan-400">{{ "%.2f"|format(contig.novelty_score) }}</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    {
+        const radar_json_str = `{{ plot_json|safe }}`;
+        if (radar_json_str) {
+            const radar_json = JSON.parse(radar_json_str);
+            const radarDiv = document.getElementById('radar-chart');
+            Plotly.newPlot(radarDiv, radar_json.data, radar_json.layout);
+        }
+    }
+</script>

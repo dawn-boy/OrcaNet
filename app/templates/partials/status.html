@@ -1,0 +1,31 @@
+<div>
+    <div id="progress-updater"
+         hx-get="{{ url_for('routes.task_status', task_id=task_id, client_stage_count=0) }}"
+         hx-trigger="load"
+         hx-swap="outerHTML">
+        <h3 class="text-2xl text-white mb-4">Initializing Analysis...</h3>
+    </div>
+
+    <div id="stacked-results" class="flex flex-col space-y-6 mt-8"></div>
+
+    <div id="log-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4" _="on click add .hidden to me">
+        <div class="bg-black text-gray-200 rounded-lg shadow-xl w-full max-w-4xl h-3/4 flex flex-col" _="on click halt the event">
+            <div class="flex justify-between items-center p-4 border-b border-gray-700">
+                <h4 class="text-lg font-bold text-cyan-400">Raw Processing Logs</h4>
+                <button class="text-gray-400 hover:text-white" _="on click add .hidden to #log-modal">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            <pre id="log-content" class="flex-grow p-4 overflow-y-auto text-xs font-mono text-white"><code>Waiting for logs...</code></pre>
+        </div>
+    </div>
+    <div id="contig-modal" class="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center hidden z-50 p-4"
+     _="on click add .hidden to me">
+    <div id="modal-content" class="bg-gray-800 text-gray-200 rounded-lg shadow-xl w-full max-w-2xl"
+         _="on click halt the event">
+        <p class="p-6">Loading details...</p>
+    </div>
+</div>
+
+    <div id="final-controls" class="text-center mt-8"></div>
+</div>

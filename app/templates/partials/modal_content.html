@@ -1,0 +1,17 @@
+<div class="flex justify-between items-center p-4 border-b border-gray-700">
+    <h4 class="text-2xl font-bold text-cyan-400">{{ contig.contig_id }}</h4>
+    <button class="text-gray-400 hover:text-white" _="on click add .hidden to #contig-modal">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+    </button>
+</div>
+
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+    {% for key, value in contig.items() %}
+    <div class="flex justify-between border-b border-gray-700 py-1">
+        <strong class="text-gray-400">{{ key.replace('_', ' ') | title }}:</strong>
+        <span class="font-mono text-gray-200 text-right">
+            {% if value is number %}{{ "%.4f"|format(value) }}{% else %}{{ value }}{% endif %}
+        </span>
+    </div>
+    {% endfor %}
+</div>

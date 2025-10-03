@@ -1,0 +1,43 @@
+<div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+    <h4 class="text-xl font-bold text-white border-b border-gray-700 pb-2 mb-4">{{ stage.title }}</h4>
+
+    {% if stage.name == 'biological_context' %}
+        <div>
+            <h5 class="text-lg font-semibold text-gray-300 mb-3">Top 15 Novel Findings</h5>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                {% for contig in stage.data.top_15_contigs %}
+                <div class="bg-gray-700 p-4 rounded-lg shadow-lg cursor-pointer hover:bg-gray-600 transition-colors"
+                     hx-get="{{ url_for('routes.contig_modal_content', task_id=task_id, contig_id=contig.contig_id) }}"
+                     hx-target="#modal-content"
+                     _="on click remove .hidden from #contig-modal">
+
+                    <h5 class="font-bold text-cyan-400 truncate">{{ contig.contig_id }}</h5>
+                    <p class="text-sm text-gray-300">Novelty: {{ "%.2f"|format(contig.novelty_score) }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ contig.top_domain_match }}</p>
+                </div>
+                {% endfor %}
+                </ul>
+            </div>
+        <div class="flex flex-col space-y-8">
+                <div>
+                    </div>
+                <div>
+                    <h5 class="text-lg font-semibold text-gray-300 mb-3">Full Master Table</h5>
+                    {% with contigs=stage.data.all_contigs[0:10], per_page=10, page=1, total_pages=((stage.data.all_contigs|length + 9) // 10), sort_by='novelty_score', sort_order='desc' %}
+                        {% include 'partials/table.html' %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    {% elif stage.name == 'novelty_scoring' %}
+        <div id="novelty-card-content">
+            {% set contig = stage.data.contig %}
+            {% set plot_json = stage.data.plot_json %}
+            {% include 'partials/radar_card_content.html' %}
+        </div>
+    {% elif stage.name == 'quality_control' %}
+        <p>fastp results would go here.</p>
+    {% else %}
+        <p class="text-sm text-gray-500">{{stage.name}}Stage complete. Data processed.</p>
+    {% endif %}
+</div>
