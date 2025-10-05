@@ -31,10 +31,17 @@ services:
     command: npm run watch
     volumes:
       - .:/orcanet
+    tty: true
+    stdin_open: true
 
-  redis-commander:
-    image: rediscommander/redis-commander:latest
+
+  browsersync:
+    image: node:18-alpine
+    working_dir: /orcanet
+    volumes:
+      - .:/orcanet
+    command: npx browser-sync start --proxy "http://web:5000" --files "app/static/css/*.css, app/templates/**/*.html" --no-open --no-ui
     ports:
-      - "8081:8081"
-    environment:
-      - REDIS_HOSTS=local:redis:6379
+      - "3000:3000"
+    depends_on:
+      - web

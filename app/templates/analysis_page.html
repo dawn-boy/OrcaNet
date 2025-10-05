@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block content%}
+<div id="analysis-container"
+     hx-get="{{ url_for('routes.task_status', task_id=task_id) }}"
+     hx-trigger="load, every 2s"
+     hx-swap="innerHTML"
+    class="h-full">
+
+    <div class="grid grid-cols-10 grid-rows-10 gap-3 h-full w-full rounded-8xl bg-gray-900 box-border">
+      <div class="bg-gray-800 rounded-3xl p-6 col-start-1 col-end-7 row-start-1 row-end-6">Table Card</div>
+      <div class="bg-gray-800 rounded-3xl p-6 col-start-7 col-end-11 row-start-1 row-end-6">CGR/Wavelet Card</div>
+      <div class="bg-gray-800 rounded-3xl p-6 col-start-1 col-end-7 row-start-6 row-end-10">Assembly Card</div>
+      <div class="bg-gray-800 rounded-3xl p-6 col-start-7 col-end-11 row-start-6 row-end-11">Novelty Card</div>
+      <div class="bg-gray-800 rounded-3xl p-6 col-start-1 col-end-7 row-start-10 row-end-11">Quality Control Card</div>
+    </div>
+
+
+{% endblock %}

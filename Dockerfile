@@ -35,4 +35,4 @@ ENV PATH="/home/appuser/.local/bin:${PATH}"
 
 COPY --chown=appuser:appgroup . ./
 
-CMD ["flask", "--app", "wsgi", "run", "--host=0.0.0.0"]
+CMD ["flask", "--app", "wsgi", "--debug", "run", "--host=0.0.0.0"]

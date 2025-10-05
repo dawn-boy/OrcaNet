@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="h-full flex flex-col items-center justify-center" hx-target="this" hx-swap="outerHTML">
+
+    <div class="max-w-xl w-full">
+        <h3 class="text-2xl mb-2 text-white font-bold text-center">Upload Your Dataset</h3>
+        <p class="text-gray-400 mb-6 text-center">
+            Upload <strong class="text-cyan-400">.json</strong> for visualization. The pipeline will use simulated data for now.
+        </p>
+
+        <form hx-post="/upload" hx-encoding="multipart/form-data">
+            <label for="file-upload" class="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-600 border-dashed rounded-lg cursor-pointer bg-gray-700 hover:bg-gray-600 transition-colors">
+
+                <div id="upload-prompt" class="flex flex-col items-center justify-center pt-5 pb-6">
+                    <svg class="w-8 h-8 mb-4 text-gray-400" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                        <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                    </svg>
+                    <p id="upload-text" class="mb-2 text-sm text-gray-400"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                    <p class="text-xs text-gray-500">Select a single JSON file</p>
+                </div>
+
+            </label>
+
+            <input id="file-upload" name="file" type="file" class="hidden" accept=".json"
+                   _="on change put `Selected: ${my.files[0].name}` into #upload-text's innerHTML">
+
+            <div class="flex justify-center mt-6">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg text-lg">
+                    Analyze Sample
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

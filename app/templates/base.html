@@ -6,26 +6,12 @@
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.1/plotly.min.js" integrity="sha512-QaIUFweb9pyRnQZEYIujSDTHndibSwqsTSb69aedsfAAUpJRUE5yyYfaNAJIbTDuNECyHR/Cc0N7lQJrp0IEpA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://unpkg.com/@phylocanvas/phylocanvas.gl@latest/dist/bundle.min.js"></script>
-
-
-
-
-</head>
-<body class="bg-gray-900 text-gray-200 font-sans">
-
-    <div id="global-spinner" class="htmx-indicator fixed top-4 right-4 z-50">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
-    </div>
-
-    <div class="container mx-auto p-8">
-        <h1 class="text-4xl font-bold text-cyan-400 text-center mb-8">OrcaNet</h1>
-
-        <main id="main-content" hx-indicator="#global-spinner">
+    </head>
+<body class="bg-gray-900 text-gray-200 font-sans h-screen overflow-hidden">
+    <div class="h-screen w-full p-4 flex flex-col">
+        <main id="main-content" class="flex-1 h-0 box-border">
             {% block content %}{% endblock %}
         </main>
     </div>
-
 </body>
 </html>
