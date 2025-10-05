@@ -1,9 +1,14 @@
 {
   "name": "orcanet",
   "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "watch": "tailwindcss -i ./app/static/css/input.css -o ./app/static/css/style.css --poll"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
   "devDependencies": {
     "tailwindcss": "^3.4.1"
   }

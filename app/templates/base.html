@@ -3,29 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <title>OrcaNet eDNA Analysis</title>
+
     <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://unpkg.com/hyperscript.org@0.9.12"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/plotly.js/3.1.1/plotly.min.js" integrity="sha512-QaIUFweb9pyRnQZEYIujSDTHndibSwqsTSb69aedsfAAUpJRUE5yyYfaNAJIbTDuNECyHR/Cc0N7lQJrp0IEpA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src="https://unpkg.com/@phylocanvas/phylocanvas.gl@latest/dist/bundle.min.js"></script>
-
+    <script src="https://unpkg.com/phylocanvas@latest/dist/phylocanvas.min.js"></script>
 
 
 
 </head>
 <body class="bg-gray-900 text-gray-200 font-sans">
+    <div class="container mx-auto p-8 flex flex-col space-y-8">
 
-    <div id="global-spinner" class="htmx-indicator fixed top-4 right-4 z-50">
-        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-400"></div>
-    </div>
+        <h1 class="text-4xl font-bold text-cyan-400 text-center">OrcaNet</h1>
 
-    <div class="container mx-auto p-8">
-        <h1 class="text-4xl font-bold text-cyan-400 text-center mb-8">OrcaNet</h1>
-
-        <main id="main-content" hx-indicator="#global-spinner">
+        <main id="content-swap-area">
             {% block content %}{% endblock %}
         </main>
-    </div>
 
+    </div>
 </body>
 </html>

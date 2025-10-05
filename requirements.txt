@@ -1,11 +1,8 @@
-flask
+Flask
 celery
 redis
-flask-htmx
-
 pandas
-numpy
-scipy
-
 plotly
-matplotlib
+flask-htmx
+numpy
+scikit-learn

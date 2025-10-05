@@ -1,58 +1,150 @@
-import os
 import time
-import pandas as pd
 from celery import shared_task
-import plotly.graph_objects as go
+import os
+import pandas as pd
 import plotly.express as px
+from celery.states import state
 from scipy.spatial.distance import pdist, squareform # For distance matrix
-from scipy.cluster.hierarchy import linkage, to_tree # For
-import numpy as np
-import random
+from scipy.cluster.hierarchy import linkage, to_tree # For clustering
+import json # <-- Import the json library
 
 
-def create_wavelet_chart(contig_data):
-    x_data = np.linspace(0, 10, 100)
-    # Use a value from the contig data to make the wave unique
-    frequency = contig_data.get('novelty_score', 1) * 5
-    y_data = np.sin(x_data * frequency) + np.random.normal(0, 0.1, 100)
+@shared_task(bind=True)
+def run_analysis_pipeline(self, json_filepath: str):
+    filename = os.path.basename(json_filepath)
+    result_dir = f"/orcanet/results_data/{self.request.id}"
+    os.makedirs(result_dir, exist_ok=True)
+    total_steps = 3
+    input_fasta_path = json_filepath.replace('.json', '.fasta')
 
-    wave_fig = px.line(x=x_data, y=y_data, title=f"Morlet Wavelet (simulated)")
-    wave_fig.update_layout(template='plotly_dark', xaxis_title="Time", yaxis_title="Amplitude",
-                           margin=dict(l=20, r=20, b=20, t=40))
-    return wave_fig.to_json()
+    completed_stages = []
+    accumulated_log = ""
 
-def create_radar_chart(contig_data):
-    """Creates a Plotly radar chart for a single contig's scores."""
-    scores = {
-        'Embedding': contig_data.get('embedding_score', 0),
-        'Homology': contig_data.get('homology_score', 0),
-        'Wavelet': contig_data.get('wavelet_score', 0),
-        'Motif': contig_data.get('motif_score', 0),
-        'Vision Uncertainty': contig_data.get('vision_uncertainty', 0)
+    try:
+        # === STAGE 1: fastp ===
+        print("Starting Stage 1: fastp...")
+        time.sleep(3)  # Simulate work
+
+        # Capture results for this stage
+        log_output_1 = f"fastp --in1 {input_fasta_path}\n" \
+                       "Simulated fastp run complete.\n" \
+                       "Total reads: 20000, Reads passed filter: 18500\n"
+        accumulated_log += log_output_1
+
+        high_quality_reads = 18500
+        low_quality_reads = 20000 - 18500
+        completed_stages.append({
+            "name": "fastp_qc", "title": "Stage 1: Quality Control (fastp)",
+            "data": {'high_quality_reads': high_quality_reads, 'low_quality_reads': low_quality_reads}
+        })
+
+        # Send ONE complete update AFTER stage 1 is done
+        self.update_state(state='PROGRESS', meta={
+            'status': f'Step 1/{total_steps}: fastp QC Complete.', 'current_step': 1, 'total_steps': total_steps,
+            'completed_stages': completed_stages, 'logs': accumulated_log
+        })
+
+        # === STAGE 2: kraken2 ===
+        print("Starting Stage 2: kraken2...")
+        time.sleep(3)  # Simulate work
+
+        log_output_2 = "\nkraken2 run complete.\nRemoved 500 contaminant reads.\n"
+        accumulated_log += log_output_2
+        completed_stages.append({
+            "name": "kraken2_filter", "title": "Stage 2: Contamination Filtering (kraken2)",
+            "data": {"contaminants_removed": 500}
+        })
+
+        # Send ONE complete update AFTER stage 2 is done
+        self.update_state(state='PROGRESS', meta={
+            'status': f'Step 2/{total_steps}: Contamination filtering complete.', 'current_step': 2,
+            'total_steps': total_steps,
+            'completed_stages': completed_stages, 'logs': accumulated_log
+        })
+
+        # === STAGE 3: Feature Extraction ===
+        print("Starting Stage 3: Feature Extraction...")
+        time.sleep(3)  # Simulate work
+
+        log_output_3 = "\nFeature extraction complete.\n"
+        accumulated_log += log_output_3
+        completed_stages.append({
+            "name": "feature_extraction", "title": "Stage 3: Feature Extraction",
+            "data": {"features_extracted": 12345}
+        })
+
+        # Send ONE complete update AFTER stage 3 is done
+        self.update_state(state='PROGRESS', meta={
+            'status': f'Step 3/{total_steps}: Feature extraction complete.', 'current_step': 3,
+            'total_steps': total_steps,
+            'completed_stages': completed_stages, 'logs': accumulated_log
+        })
+        time.sleep(1)  # Final pause before returning success
+    except Exception as e:
+        print(f"ERROR: {e}")
+        return {'status': 'Error', 'result': f'Error during analysis: {e}'}
+
+    df = pd.read_json(json_filepath, orient='records')
+
+    try:
+        tree_path = os.path.join(result_dir, "tree.nwk")
+        if len(df) >= 2:
+            # --- This part is the same ---
+            features_for_tree = ['UMAP_x', 'UMAP_y', 'UMAP_z']
+            available_features = [f for f in features_for_tree if f in df.columns]
+            if available_features:
+                X = df[available_features].values
+            elif 'novelty_score' in df.columns:
+                X = df[['novelty_score']].values
+            else:
+                raise ValueError("No suitable features found for tree generation.")
+
+            distance_matrix = pdist(X, metric='euclidean')
+            linked_tree = linkage(distance_matrix, method='average')
+
+            # --- This part is updated ---
+            # Convert the linkage to a ClusterNode object which is easier to parse
+            tree_root = to_tree(linked_tree)
+            # Call our new, corrected get_newick function
+            newick_tree = get_newick(tree_root, df['contig_id'].tolist()) + ";"
+
+            with open(tree_path, "w") as f:
+                f.write(newick_tree)
+            print(f"Successfully wrote dynamic tree file to {tree_path}")
+        # ... (rest of the try/except is the same)
+    except Exception as e:
+        print(f"ERROR: Could not write tree file. Reason: {e}")
+
+    # --- Generate table and plot (same as before) ---
+    table_df = df.drop(columns=['UMAP_x', 'UMAP_y', 'UMAP_z'], errors='ignore')
+
+    contigs_data = table_df.to_dict(orient='records')
+
+    fig = px.scatter_3d(
+        df, x='UMAP_x', y='UMAP_y', z='UMAP_z', color='novelty_score',
+        hover_data=['contig_id'], custom_data=['contig_id'],
+        title="3D UMAP Projection of eDNA Bins",
+        color_continuous_scale=px.colors.sequential.Viridis
+    )
+    fig.update_layout(template='plotly_dark', margin=dict(l=0, r=0, b=0, t=40))
+    plot_json = fig.to_json()
+
+
+    self.update_state(state='SUCCESS', meta={'status': 'Complete!', 'result': f'Analysis of {filename} is finished.',
+                                             'contigs_data': contigs_data, 'plot_json': plot_json, 'task_id': self.request.id})
+    return {
+        'status': 'Complete!',
+        'result': f'Analysis of {filename} is finished.',
+        'contigs_data': contigs_data,
+        'plot_json': plot_json,
+        'task_id': self.request.id  # Pass the task ID so we can build file URLs
     }
 
-    fig = go.Figure()
-    fig.add_trace(go.Scatterpolar(
-        r=list(scores.values()),
-        theta=list(scores.keys()),
-        fill='toself',
-        line=dict(color='cyan')
-    ))
-
-    fig.update_layout(
-        polar=dict(
-            radialaxis=dict(visible=True, range=[0, 1], color='#888'),
-            angularaxis=dict(color='#ccc')
-        ),
-        showlegend=False,
-        template='plotly_dark',
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        margin=dict(l=40, r=40, b=40, t=40)
-    )
-    return fig.to_json()
 
 def get_newick(node, leaf_names):
+    """
+    Recursively convert a scipy.cluster.hierarchy.ClusterNode to a valid Newick string.
+    """
     if node.is_leaf():
         # If it's a leaf, return its name
         return leaf_names[node.id]
@@ -67,138 +159,3 @@ def get_newick(node, leaf_names):
 
         # Return the formatted Newick string for this node
         return f"({left_branch}:{left_len:.6f},{right_branch}:{right_len:.6f})"
-
-
-@shared_task(bind=True)
-def run_analysis_pipeline(self, json_filepath: str):
-    completed_stages = []
-    accumulated_log = ""
-    pipeline_stages = [
-        ("quality_control", "Stage 1: Quality Control"),
-        ("metagenomic_assembly", "Stage 2: Metagenomic Assembly"),
-        ("feature_extraction", "Stage 3: Feature Extraction"),
-        ("novelty_scoring", "Stage 4: Novelty Scoring"),
-        ("biological_context", "Stage 5: Biological Analysis"),
-    ]
-    total_stages = len(pipeline_stages)
-
-    # Process at each stage
-    for i, (stage_name, stage_title) in enumerate(pipeline_stages):
-        current_step = i + 1
-
-        log_output = f"--- Running {stage_title} ---\n"
-        time.sleep(2)
-        log_output += f"--- {stage_title} complete. ---\n\n"
-
-        accumulated_log += log_output
-        stage_result_data = {"status": "Completed successfully"} # just a placeholder, replace with actual data from the process
-
-    # PLACEHOLDER VISUALS
-        df = pd.read_json(json_filepath, orient='records')
-        all_contigs = df.to_dict(orient='records')
-
-        # STAGE ONE
-        if stage_name == "quality_control":
-            total_contigs = len(df)
-            high_quality_count = random.randint(int(total_contigs * 0.8), total_contigs)
-            low_quality_count = total_contigs - high_quality_count
-
-            stage_result_data = {
-                'High Quality Reads': high_quality_count,
-                'Low Quality Reads': low_quality_count,
-            }
-
-        # STAGE TWO
-        if stage_name == "metagenomic_assembly":
-            result_dir = f"/orcanet/results_data/{self.request.id}"
-            os.makedirs(result_dir, exist_ok=True)
-
-            fig = px.scatter_3d(
-                df, x='UMAP_x', y='UMAP_y', z='UMAP_z', color='novelty_score',
-                hover_data=['contig_id'], custom_data=['contig_id'],
-                title="3D UMAP Projection of Assembled Contigs"
-            )
-            fig.update_layout(template='plotly_dark', margin=dict(l=0, r=0, b=0, t=40))
-            plot_json = fig.to_json()
-
-            try:
-                tree_path = os.path.join(result_dir, "tree.nwk")
-                if len(df) >= 2:
-                    features_for_tree = ['UMAP_x', 'UMAP_y', 'UMAP_z']
-                    available_features = [f for f in features_for_tree if f in df.columns]
-                    if available_features:
-                        X = df[available_features].values
-                    elif 'novelty_score' in df.columns:
-                        X = df[['novelty_score']].values
-                    else:
-                        raise ValueError("No suitable features found for tree generation.")
-
-                    distance_matrix = pdist(X, metric='euclidean')
-                    linked_tree = linkage(distance_matrix, method='average')
-
-                    tree_root = to_tree(linked_tree)
-                    newick_tree = get_newick(tree_root, df['contig_id'].tolist()) + ";"
-
-                    with open(tree_path, "w") as f:
-                        f.write(newick_tree)
-                    print(f"Successfully wrote dynamic tree file to {tree_path}")
-
-                    time.sleep(1)
-            except Exception as e:
-                print(f"ERROR: Could not write tree file. Reason: {e}")
-
-            stage_result_data = {
-                'plot_json': plot_json,
-                'task_id': self.request.id
-            }
-
-        # STAGE THREE
-        if stage_name == "feature_extraction":
-            top_contig = sorted(all_contigs, key=lambda x: x.get('novelty_score', 0), reverse=True)[0]
-            wavelet_plot_json = create_wavelet_chart(top_contig)
-            stage_result_data = {
-                'contig': top_contig,
-                'plot_json': wavelet_plot_json,
-                'task_id': self.request.id
-            }
-
-        # STAGE FOUR
-        if stage_name == "novelty_scoring":
-            top_contig = sorted(all_contigs, key=lambda x: x.get('novelty_score', 0), reverse=True)[0]
-            radar_plot_json = create_radar_chart(top_contig)
-            stage_result_data = {
-                "contig": top_contig,
-                "plot_json": radar_plot_json
-            }
-
-        # STAGE FIVE
-        elif stage_name == "biological_context":
-            table_df = df.drop(columns=['UMAP_x', 'UMAP_y', 'UMAP_z'], errors='ignore')
-            all_contigs = table_df.to_dict(orient='records')
-            top_15_contigs = table_df.sort_values(by='novelty_score', ascending=False).head(15).to_dict(orient='records')
-            stage_result_data = {
-                'all_contigs': all_contigs,
-                'top_15_contigs': top_15_contigs,
-            }
-
-        completed_stages.append({
-            "name": stage_name,
-            "title": stage_title,
-            "data": stage_result_data,
-        })
-
-        # Stage a complete status update
-        self.update_state(
-            state="PROGRESS",
-            meta={
-                'status': f"Running {stage_title}...",
-                'current_step': current_step,
-                'total_stages': total_stages,
-                'completed_stages': completed_stages,
-                'logs': accumulated_log,
-            })
-        
-
-    time.sleep(3)
-
-    return {"status": "Complete", "final_meta": self.AsyncResult(self.request.id).info}

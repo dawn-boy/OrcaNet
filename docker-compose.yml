@@ -1,8 +1,6 @@
 services:
   redis:
     image: "redis:7-alpine"
-    ports:
-      - "6379:6379"
     restart: always
 
   web:
@@ -15,26 +13,17 @@ services:
       - redis
 
   worker:
-    build:
-      context: .
-      args:
-        - UID=${UID:-1000}
-        - GID=${GID:-1000}
+    build: .
     command: celery -A celery_worker.celery_app worker --loglevel=info
     volumes:
       - .:/orcanet
     depends_on:
       - redis
 
+  # --- NEW SERVICE FOR TAILWIND ---
   tailwind:
     build: .
     command: npm run watch
     volumes:
       - .:/orcanet
-
-  redis-commander:
-    image: rediscommander/redis-commander:latest
-    ports:
-      - "8081:8081"
-    environment:
-      - REDIS_HOSTS=local:redis:6379
+    working_dir: /orcanet

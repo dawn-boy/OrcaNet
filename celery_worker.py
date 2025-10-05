@@ -1,3 +1,5 @@
+# celery_worker.py
 from app import create_app
-app = create_app()
-celery_app = app.extensions["celery"]
+
+flask_app = create_app()
+celery_app = flask_app.extensions["celery"]
