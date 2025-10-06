@@ -4,6 +4,7 @@ import pandas as pd
 from celery import shared_task
 import plotly.graph_objects as go
 import plotly.express as px
+from flask import current_app
 from scipy.spatial.distance import pdist, squareform # For distance matrix
 from scipy.cluster.hierarchy import linkage, to_tree # For
 import numpy as np
@@ -110,7 +111,10 @@ def run_analysis_pipeline(self, json_filepath: str):
 
         # STAGE TWO
         if stage_name == "metagenomic_assembly":
-            result_dir = f"/orcanet/results_data/{self.request.id}"
+            result_dir = os.path.join(
+                current_app.config["RESULTS_FOLDER"],
+                self.request.id
+            )
             os.makedirs(result_dir, exist_ok=True)
 
             fig = px.scatter_3d(

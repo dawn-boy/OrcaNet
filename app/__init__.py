@@ -8,6 +8,9 @@ def create_app():
     htmx = HTMX(app)
     redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 
+    data_dir = os.path.join(app.root_path, "data")
+    app.config["UPLOAD_FOLDER"] = os.path.join(data_dir, "uploads")
+    app.config["RESULTS_FOLDER"] = os.path.join(data_dir, "results_data")
 
     app.config.from_mapping(
         CELERY=dict(

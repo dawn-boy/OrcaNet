@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, render_template, request, Response, send_from_directory, url_for
+from flask import Blueprint, render_template, request, Response, send_from_directory, url_for, current_app
 from werkzeug.utils import secure_filename
 from . import tasks
 import random
@@ -22,7 +22,7 @@ def upload_file():
         return "<p class='text-red-400 text-center'>Please select a valid .json file.</p>", 400
 
     # save the file
-    upload_folder = '/orcanet/uploads'
+    upload_folder = current_app.config["UPLOAD_FOLDER"]
     os.makedirs(upload_folder, exist_ok=True)
     filename = secure_filename(file.filename)
     json_path = os.path.join(upload_folder, filename)
@@ -165,5 +165,8 @@ def update_details(task_id: str, contig_id: str):
 
 @bp.route('/results_data/<task_id>/<path:filename>')
 def serve_result_file(task_id, filename):
-    directory = f"/orcanet/results_data/{task_id}"
+    directory = os.path.join(
+        current_app.config["RESULTS_FOLDER"],
+        task_id
+    )
     return send_from_directory(directory, filename)
