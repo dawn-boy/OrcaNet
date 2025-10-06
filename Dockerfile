@@ -35,5 +35,5 @@ USER app
 # Start the application with Gunicorn
 # Railway automatically provides and exposes the $PORT variable
 
-CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 4 wsgi:app
+CMD ["sh","-c","python run.py"]
 
