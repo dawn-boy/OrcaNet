@@ -1,53 +1,43 @@
 # Dockerfile
 
-# Use a specific Python version
+# 1. Base image and environment
 FROM python:3.10-slim-bookworm
-
-# Set environment variables for production
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV FLASK_ENV=production
 
 WORKDIR /app
 
-# Install Node.js for the Tailwind build step
-RUN apt-get update && apt-get install -y --no-install-recommends nodejs npm && rm -rf /var/lib/apt/lists/*
+# 2. Install Node.js for Tailwind build
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends nodejs npm \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy dependency files first to leverage Docker layer caching
+# 3. Copy and install dependencies
 COPY requirements.txt package.json package-lock.json* ./
-
-# Install Python and Node.js dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 RUN npm ci
 
-# Create a non-root user for the application
+# 4. Add non-root user
 RUN addgroup --system app && adduser --system --ingroup app app
 
-# Copy the entire application code
+# 5. Copy application code and build CSS into /app/static/css
 COPY . .
-
-# Build the production CSS file, which populates the static/css folder
 RUN npm run build
 
-# --- START OF MODIFICATIONS ---
-
-# 1. Move the fully built static folder to a source location.
-#    This is because the volume will hide the original /app/static directory.
+# 6. Preserve built static assets under a different path
 RUN mv /app/static /app/static_assets_source
 
-# 2. Copy the startup script and make it executable
-COPY start.sh .
+# 7. Copy entrypoint script and Gunicorn config
+COPY start.sh gunicorn_conf.py ./
 RUN chmod +x start.sh
 
-# --- END OF MODIFICATIONS ---
-
-# Switch to the non-root user
+# 8. Switch to non-root
 USER app
 
-# --- UPDATE ENTRYPOINT AND CMD ---
+# 9. Expose a default port (documentation only)
+EXPOSE 8080
 
-# 3. Set the ENTRYPOINT to our new script.
-#    This script will now run on every container start.
+# 10. Entrypoint and default command
 ENTRYPOINT ["./start.sh"]
-
 CMD ["gunicorn", "-c", "gunicorn_conf.py", "wsgi:app"]
