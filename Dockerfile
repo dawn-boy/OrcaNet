@@ -24,6 +24,9 @@ COPY . .
 # Build the production CSS file
 RUN npm run build
 
+ENV PORT=8080
+EXPOSE 8080
+
 # Start the application with Gunicorn
 # Railway automatically provides and exposes the $PORT variable
 CMD gunicorn --bind 0.0.0.0:$PORT --workers 4 wsgi:app
