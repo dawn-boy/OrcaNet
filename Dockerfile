@@ -26,7 +26,7 @@ COPY . .
 RUN npm run build
 
 # 6. Preserve built static assets under a different path
-RUN mv /app/static /app/static_assets_source
+RUN mv app/static ./app/static_assets_source
 
 # 7. Copy entrypoint script and Gunicorn config
 COPY start.sh gunicorn_conf.py ./
