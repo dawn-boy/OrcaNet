@@ -6,8 +6,8 @@ set -e
 
 # Define the source directory (where we bake assets into the image)
 # and the destination directory (the persistent volume)
-SOURCE_DIR="/app/static/"
-DEST_DIR="/app/static/"
+SOURCE_DIR="/app/static_assets_source"
+DEST_DIR="/app/static"
 
 # Check if the destination directory (the volume) is empty.
 # If it is, copy the assets from our baked-in source directory.

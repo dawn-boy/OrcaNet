@@ -33,7 +33,7 @@ RUN npm run build
 
 # 1. Move the fully built static folder to a source location.
 #    This is because the volume will hide the original /app/static directory.
-RUN mv /app/static /app/static
+RUN mv /app/static /app/static_assets_source
 
 # 2. Copy the startup script and make it executable
 COPY start.sh .
