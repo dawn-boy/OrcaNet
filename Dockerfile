@@ -18,8 +18,11 @@ COPY requirements.txt package.json package-lock.json* ./
 RUN pip install --no-cache-dir -r requirements.txt
 RUN npm ci
 
+RUN addgroup --system app && adduser --system --ingroup app app
+
 # Copy the rest of your application code
 COPY . .
+
 
 # Build the production CSS file
 RUN npm run build
@@ -27,7 +30,10 @@ RUN npm run build
 ENV PORT=8080
 EXPOSE 8080
 
+USER app
+
 # Start the application with Gunicorn
 # Railway automatically provides and exposes the $PORT variable
-CMD gunicorn --bind 0.0.0.0:$PORT --workers 4 wsgi:app
+
+CMD exec gunicorn --bind 0.0.0.0:$PORT --workers 4 wsgi:app
 
