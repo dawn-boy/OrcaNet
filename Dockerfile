@@ -29,7 +29,7 @@ RUN npm run build
 RUN mv app/static ./app/static_assets_source
 
 RUN mkdir -p app/static \
- && chown -R app:app app/static \
+ && chown -R app:app app/static
 
 # 7. Copy entrypoint script and Gunicorn config
 COPY start.sh gunicorn_conf.py ./
