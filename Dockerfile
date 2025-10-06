@@ -26,4 +26,5 @@ RUN npm run build
 
 # Start the application with Gunicorn
 # Railway automatically provides and exposes the $PORT variable
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "4", "wsgi:app"]
+CMD gunicorn --bind 0.0.0.0:$PORT --workers 4 wsgi:app
+
