@@ -29,8 +29,8 @@ RUN npm run build
 RUN mv app/static ./app/static_assets_source
 
 
-RUN mkdir -p app/data/uploads  app/static \
-    && mkdir -p app/data/results_data \
+RUN mkdir -p app/app/data/uploads  app/static \
+    && mkdir -p app/app/data/results_data \
     && chown -R app:app app/data app/static
 
 # 7. Copy entrypoint script and Gunicorn config
