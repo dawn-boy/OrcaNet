@@ -1,15 +1,18 @@
 from flask import Flask
 from celery import Celery, Task
 from flask_htmx import HTMX
+import os
 
 def create_app():
     app = Flask(__name__)
     htmx = HTMX(app)
+    redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+
 
     app.config.from_mapping(
         CELERY=dict(
-            broker_url="redis://redis:6379/0",
-            result_backend="redis://redis:6379/0",
+            broker_url=redis_url,
+            result_backend=redis_url,
             task_serializer='pickle',
             result_serializer='pickle',
             accept_content=['pickle', 'json'],

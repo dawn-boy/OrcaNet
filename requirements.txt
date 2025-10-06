@@ -9,3 +9,5 @@ scipy
 
 plotly
 matplotlib
+gunicorn
+

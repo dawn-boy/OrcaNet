@@ -1,38 +1,29 @@
+# Use a specific Python version
 FROM python:3.10-slim-bookworm
 
+# Set environment variables for production
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
-ENV PYTHONPATH=/orcanet
+ENV FLASK_ENV=production
 
-ARG UID=1000
-ARG GID=1000
+# Install Node.js for the Tailwind build step
+RUN apt-get update && apt-get install -y --no-install-recommends nodejs npm && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    sudo \
-    nodejs \
-    npm \
-    mafft \
-    hmmer \
-    diamond-aligner \
-    && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 
-RUN groupadd -g $GID appgroup && \
-    useradd -u $UID -g $GID -ms /bin/bash appuser && \
-    usermod -aG sudo appuser
+# Copy dependency files first to leverage Docker layer caching
+COPY requirements.txt package.json package-lock.json* ./
 
-WORKDIR /orcanet
-
-RUN chown appuser:appgroup /orcanet
-
-USER appuser
-
-COPY --chown=appuser:appgroup requirements.txt package-lock.json* package.json ./
-
-RUN pip install --no-cache-dir --user -r requirements.txt
+# Install Python and Node.js dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 RUN npm ci
 
-ENV PATH="/home/appuser/.local/bin:${PATH}"
+# Copy the rest of your application code
+COPY . .
 
-COPY --chown=appuser:appgroup . ./
+# Build the production CSS file
+RUN npm run build
 
-CMD ["flask", "--app", "wsgi", "run", "--host=0.0.0.0"]
+# Start the application with Gunicorn
+# Railway automatically provides and exposes the $PORT variable
+CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "--workers", "4", "wsgi:app"]
