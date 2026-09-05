@@ -2,7 +2,7 @@
 
 OrcaNet is a full-stack bioinformatics web application designed to analyze and visualize metagenomic data. It provides an end-to-end pipeline for uploading dataset files (JSON format), processing them through various analytical stages, and generating interactive visualizations to explore contig novelty, biological context, and clustering.
 
-## 🏗️ Architecture overview
+## Architecture overview
 
 The application is designed with a decoupled, asynchronous architecture to handle long-running data analysis tasks without blocking the user interface.
 
@@ -40,7 +40,7 @@ graph TD
 5. **Data Processing & Visualization (Pandas, SciPy, Plotly)**:
    - The Celery worker utilizes Python's data science stack to parse the data, perform calculations (like hierarchical clustering and distance matrices), and generate interactive JSON-based Plotly figures (Radar charts, 3D UMAPs, Wavelets).
 
-## 🚀 Technologies Used
+## Technologies Used
 
 ### Backend & Infrastructure
 - **[Flask](https://flask.palletsprojects.com/)**: The core web framework routing requests and rendering templates.
@@ -58,7 +58,7 @@ graph TD
 - **[SciPy](https://scipy.org/)**: Used for advanced mathematical functions, specifically calculating distance matrices (`pdist`) and hierarchical clustering (`linkage`, `to_tree`) for phylogenetic tree generation.
 - **[Plotly](https://plotly.com/python/)**: Used to generate complex, interactive visualizations (Radar Charts, 3D Scatter Plots, Morlet Wavelets) directly from Python, which are then rendered on the frontend.
 
-## 🧬 Analysis Pipeline
+## Analysis Pipeline
 
 When a user uploads a `.json` dataset, it goes through a simulated 5-stage analysis pipeline executed by Celery:
 
@@ -68,7 +68,7 @@ When a user uploads a `.json` dataset, it goes through a simulated 5-stage analy
 4. **Novelty Scoring**: Calculates various scores (Embedding, Homology, Wavelet, Motif, Vision Uncertainty) and generates a comprehensive Radar chart.
 5. **Biological Context**: Aggregates the data, sorts by novelty, and prepares the final datasets for tabular presentation.
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 - Docker
